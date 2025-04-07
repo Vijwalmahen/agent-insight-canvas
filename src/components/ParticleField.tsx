@@ -7,12 +7,13 @@ import {
   Network,
   BarChart,
   ScatterPlot,
-  WaveSurface
+  WaveSurface,
+  AnalyticsViz
 } from './visualizations';
 import { VisualizationProps } from './visualizations/types';
 
 interface DataVisualizationProps extends VisualizationProps {
-  variant?: 'dataGlobe' | 'flowField' | 'network' | 'bars' | 'scatter' | 'wave';
+  variant?: 'dataGlobe' | 'flowField' | 'network' | 'bars' | 'scatter' | 'wave' | 'analytics';
 }
 
 const DataVisualization = ({ 
@@ -37,6 +38,8 @@ const DataVisualization = ({
       return <ScatterPlot count={count} mouse={mouse} speed={speed} size={size} color={color} />;
     case 'wave':
       return <WaveSurface count={count} mouse={mouse} speed={speed} color={color} />;
+    case 'analytics':
+      return <AnalyticsViz count={count} mouse={mouse} speed={speed} size={size} color={color} />;
     case 'dataGlobe':
     default:
       return <DataGlobe count={count} mouse={mouse} speed={speed} size={size} color={color} />;
