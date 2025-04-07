@@ -2,6 +2,7 @@
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+import { Points, PointMaterial } from '@react-three/drei';
 
 interface ParticleProps {
   count?: number;
@@ -110,7 +111,7 @@ const ParticleField = ({ count = 1000, mouse, speed = 0.1, size = 0.02, color = 
   return (
     <points ref={mesh}>
       <bufferGeometry {...particlesGeometry} />
-      <pointsMaterial
+      <PointMaterial
         size={size}
         sizeAttenuation={true}
         color={color}
