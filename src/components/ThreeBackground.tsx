@@ -32,28 +32,28 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
     switch(variant) {
       case 'demo':
         return {
-          dataPoints: 64,
+          dataPoints: 100,
           color: '#4C9EEB',
           size: 0.04,
-          speed: 0.2,
-          visualType: 'scatter' as const
+          speed: 0.3,
+          visualType: 'flowField' as const
         };
       case 'contact':
         return {
-          dataPoints: 100,
+          dataPoints: 200,
           color: '#10B981',
-          size: 0.03,
-          speed: 0.15,
-          visualType: 'wave' as const
+          size: 0.05,
+          speed: 0.2,
+          visualType: 'network' as const
         };
       case 'landing':
       default:
         return {
-          dataPoints: 49,
+          dataPoints: 150,
           color: '#8B5CF6',
-          size: 0.05,
-          speed: 0.1,
-          visualType: 'bars' as const
+          size: 0.06,
+          speed: 0.15,
+          visualType: 'dataGlobe' as const
         };
     }
   };
@@ -62,9 +62,10 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
   
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 10, 5]} intensity={0.8} />
-      <pointLight position={[-10, -10, -5]} color="#8B5CF6" intensity={0.5} />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 10, 5]} intensity={1.2} />
+      <pointLight position={[-10, -10, -5]} color="#8B5CF6" intensity={0.8} />
+      <spotLight position={[0, 15, 0]} angle={0.3} penumbra={0.8} intensity={0.5} castShadow />
       
       <DataVisualization 
         count={settings.dataPoints} 
@@ -87,9 +88,9 @@ interface ThreeBackgroundProps {
 
 const ThreeBackground = ({ isInteractive = false, variant = 'landing' }: ThreeBackgroundProps) => {
   return (
-    <div className={`canvas-container ${isInteractive ? 'interactive' : ''}`}>
-      <Canvas>
-        <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={60} />
+    <div className="canvas-container absolute inset-0 w-full h-full bg-gradient-to-b from-background to-background/80 -z-10">
+      <Canvas shadows>
+        <PerspectiveCamera makeDefault position={[0, 0, 12]} fov={60} />
         <Scene isInteractive={isInteractive} variant={variant} />
       </Canvas>
     </div>
