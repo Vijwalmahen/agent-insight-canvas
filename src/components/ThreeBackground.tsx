@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
-import ParticleField from './ParticleField';
+import DataVisualization from './ParticleField';
 
 interface SceneProps {
   isInteractive?: boolean;
@@ -27,30 +27,33 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
     };
   }, []);
 
-  // Set different parameters based on the variant
+  // Set different visualization parameters based on the variant
   const getVariantSettings = () => {
     switch(variant) {
       case 'demo':
         return {
-          particleCount: 800,
+          dataPoints: 64,
           color: '#4C9EEB',
-          size: 0.03,
-          speed: 0.2
+          size: 0.04,
+          speed: 0.2,
+          visualType: 'scatter' as const
         };
       case 'contact':
         return {
-          particleCount: 500,
+          dataPoints: 100,
           color: '#10B981',
-          size: 0.025,
-          speed: 0.15
+          size: 0.03,
+          speed: 0.15,
+          visualType: 'wave' as const
         };
       case 'landing':
       default:
         return {
-          particleCount: 1000,
+          dataPoints: 49,
           color: '#8B5CF6',
-          size: 0.02,
-          speed: 0.1
+          size: 0.05,
+          speed: 0.1,
+          visualType: 'bars' as const
         };
     }
   };
@@ -59,16 +62,17 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
   
   return (
     <>
-      <ambientLight intensity={0.1} />
-      <directionalLight position={[10, 10, 5]} intensity={0.3} />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 10, 5]} intensity={0.8} />
       <pointLight position={[-10, -10, -5]} color="#8B5CF6" intensity={0.5} />
       
-      <ParticleField 
-        count={settings.particleCount} 
+      <DataVisualization 
+        count={settings.dataPoints} 
         mouse={mouse} 
         color={settings.color}
         size={settings.size}
         speed={settings.speed}
+        variant={settings.visualType}
       />
       
       {isInteractive && <OrbitControls enableZoom={false} enablePan={false} />}
@@ -85,7 +89,7 @@ const ThreeBackground = ({ isInteractive = false, variant = 'landing' }: ThreeBa
   return (
     <div className={`canvas-container ${isInteractive ? 'interactive' : ''}`}>
       <Canvas>
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={75} />
+        <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={60} />
         <Scene isInteractive={isInteractive} variant={variant} />
       </Canvas>
     </div>
