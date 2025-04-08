@@ -80,3 +80,20 @@ export const processFile = async (fileUrl: string): Promise<string> => {
     </div>
   `;
 };
+
+// New function to handle contact form submissions
+export const submitContactForm = async (formData: {
+  name: string;
+  email: string;
+  company?: string;
+  message: string;
+}): Promise<boolean> => {
+  console.log('Submitting contact form:', formData);
+  
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // In a real implementation, this would submit to a backend API
+  // For now, we just simulate a successful submission
+  return true;
+};

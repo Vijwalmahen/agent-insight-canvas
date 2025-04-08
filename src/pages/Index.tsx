@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import ThreeBackground from "@/components/ThreeBackground";
@@ -13,7 +12,7 @@ const Index = () => {
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-5xl">
             <div className="flex flex-col items-center text-center">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 animate-fade-in">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6 animate-fade-in text-white">
                 Unlock Deep Insights with{" "}
                 <span className="text-primary">Multi-Agent AI</span>
               </h1>
@@ -24,9 +23,6 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-4 animate-fade-in">
                 <Button asChild size="lg">
                   <Link to="/demo">Try Demo</Link>
-                </Button>
-                <Button variant="outline" size="lg">
-                  Learn More
                 </Button>
               </div>
             </div>
