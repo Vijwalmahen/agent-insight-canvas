@@ -17,15 +17,14 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       // Convert mouse position to normalized device coordinates (-1 to +1)
-      // Enhanced sensitivity for more pronounced effect
       mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
       
       // Subtle camera movement following mouse
       if (!isInteractive) {
         // Move camera slightly in the direction of mouse movement
-        const targetX = mouse.current.x * 0.3;
-        const targetY = mouse.current.y * 0.3;
+        const targetX = mouse.current.x * 0.4;
+        const targetY = mouse.current.y * 0.4;
         
         // Smooth camera animation
         camera.position.x += (targetX - camera.position.x) * 0.05;
@@ -47,25 +46,34 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
     switch(variant) {
       case 'demo':
         return {
-          particleCount: 800,
+          particleCount: 100,
           color: '#4C9EEB',
-          size: 0.03,
-          speed: 0.2
+          size: 0.05,
+          speed: 0.15,
+          lineOpacity: 0.3,
+          maxConnections: 4,
+          connectionDistance: 3
         };
       case 'contact':
         return {
-          particleCount: 500,
+          particleCount: 80,
           color: '#10B981',
-          size: 0.025,
-          speed: 0.15
+          size: 0.04,
+          speed: 0.12,
+          lineOpacity: 0.25,
+          maxConnections: 3,
+          connectionDistance: 2.5
         };
       case 'landing':
       default:
         return {
-          particleCount: 1000,
+          particleCount: 120,
           color: '#8B5CF6',
-          size: 0.02,
-          speed: 0.1
+          size: 0.04,
+          speed: 0.1,
+          lineOpacity: 0.2,
+          maxConnections: 5,
+          connectionDistance: 2.8
         };
     }
   };
@@ -74,7 +82,7 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
   
   return (
     <>
-      <ambientLight intensity={0.1} />
+      <ambientLight intensity={0.2} />
       <directionalLight position={[10, 10, 5]} intensity={0.3} />
       <pointLight position={[-10, -10, -5]} color={settings.color} intensity={0.5} />
       
@@ -84,6 +92,9 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
         color={settings.color}
         size={settings.size}
         speed={settings.speed}
+        lineOpacity={settings.lineOpacity}
+        maxConnections={settings.maxConnections}
+        connectionDistance={settings.connectionDistance}
       />
       
       {isInteractive && <OrbitControls enableZoom={false} enablePan={false} />}

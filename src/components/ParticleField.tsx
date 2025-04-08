@@ -1,8 +1,6 @@
-
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { Points, PointMaterial } from '@react-three/drei';
 
 interface ParticleProps {
   count?: number;
@@ -10,13 +8,25 @@ interface ParticleProps {
   speed?: number;
   size?: number;
   color?: string;
+  lineOpacity?: number;
+  maxConnections?: number;
+  connectionDistance?: number;
 }
 
-const ParticleField = ({ count = 1000, mouse, speed = 0.1, size = 0.02, color = '#8B5CF6' }: ParticleProps) => {
-  const mesh = useRef<THREE.Points>(null);
+const ParticleField = ({ 
+  count = 80, 
+  mouse, 
+  speed = 0.1, 
+  size = 0.04, 
+  color = '#8B5CF6',
+  lineOpacity = 0.2,
+  maxConnections = 3,
+  connectionDistance = 2.5
+}: ParticleProps) => {
+  const pointsRef = useRef<THREE.Points>(null);
+  const linesRef = useRef<THREE.LineSegments>(null);
   const hoverPoint = useRef(new THREE.Vector3(0, 0, 0));
 
-  const dummy = useMemo(() => new THREE.Object3D(), []);
   const particles = useMemo(() => {
     const temp = [];
     for (let i = 0; i < count; i++) {
@@ -24,77 +34,15 @@ const ParticleField = ({ count = 1000, mouse, speed = 0.1, size = 0.02, color = 
       const y = (Math.random() - 0.5) * 10;
       const z = (Math.random() - 0.5) * 10;
       
-      temp.push({ x, y, z, vx: 0, vy: 0, vz: 0 });
+      temp.push({ 
+        x, y, z, 
+        vx: (Math.random() - 0.5) * 0.01, 
+        vy: (Math.random() - 0.5) * 0.01, 
+        vz: (Math.random() - 0.5) * 0.01 
+      });
     }
     return temp;
   }, [count]);
-
-  useFrame(() => {
-    if (!mesh.current) return;
-    
-    // Update positions
-    const positions = mesh.current.geometry.attributes.position.array as Float32Array;
-    const sizes = mesh.current.geometry.attributes.size.array as Float32Array;
-    
-    // Convert mouse position to 3D space
-    // Enhanced reactivity - increase the effect of mouse position
-    hoverPoint.current.set((mouse.current.x * 5), (mouse.current.y * 5), 0);
-    
-    for (let i = 0; i < particles.length; i++) {
-      const i3 = i * 3;
-      const particle = particles[i];
-      
-      // Get current position
-      const x = positions[i3];
-      const y = positions[i3 + 1];
-      const z = positions[i3 + 2];
-      
-      // Calculate distance to mouse
-      const dx = hoverPoint.current.x - x;
-      const dy = hoverPoint.current.y - y;
-      const dz = hoverPoint.current.z - z;
-      
-      const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-      
-      // Enhanced force calculation - wider reach and stronger effect
-      const force = Math.max(0, 1 - distance / 3.0);
-      
-      // Apply force toward or away from mouse - increased effect
-      if (distance < 3.0) {
-        // Push particles away from mouse for a more reactive effect
-        particle.vx -= dx * force * 0.03;
-        particle.vy -= dy * force * 0.03;
-        particle.vz -= dz * force * 0.03;
-        
-        // Make particles near mouse larger for more visible effect
-        sizes[i] = size * (1 + force * 2);
-      } else {
-        // Return to original position more quickly
-        particle.vx += (particle.x - x) * speed * 0.02;
-        particle.vy += (particle.y - y) * speed * 0.02;
-        particle.vz += (particle.z - z) * speed * 0.02;
-        
-        // Reset size
-        sizes[i] = size;
-      }
-      
-      // Apply velocity with less damping for more fluid motion
-      positions[i3] += particle.vx;
-      positions[i3 + 1] += particle.vy;
-      positions[i3 + 2] += particle.vz;
-      
-      // Slightly reduced damping for more persistent motion
-      particle.vx *= 0.92;
-      particle.vy *= 0.92;
-      particle.vz *= 0.92;
-    }
-    
-    mesh.current.geometry.attributes.position.needsUpdate = true;
-    mesh.current.geometry.attributes.size.needsUpdate = true;
-    
-    mesh.current.rotation.x += 0.0005;
-    mesh.current.rotation.y += 0.0005;
-  });
 
   const particlesGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
@@ -113,17 +61,130 @@ const ParticleField = ({ count = 1000, mouse, speed = 0.1, size = 0.02, color = 
     return geometry;
   }, [particles, size]);
 
+  const linesGeometry = useMemo(() => {
+    return new THREE.BufferGeometry();
+  }, []);
+
+  const lineMaterial = useMemo(() => {
+    return new THREE.LineBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: lineOpacity,
+    });
+  }, [color, lineOpacity]);
+
+  useFrame(() => {
+    if (!pointsRef.current || !linesRef.current) return;
+    
+    const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
+    const sizes = pointsRef.current.geometry.attributes.size.array as Float32Array;
+    
+    hoverPoint.current.set((mouse.current.x * 7), (mouse.current.y * 7), 0);
+    
+    for (let i = 0; i < particles.length; i++) {
+      const i3 = i * 3;
+      const particle = particles[i];
+      
+      particle.vx += (Math.random() - 0.5) * 0.002;
+      particle.vy += (Math.random() - 0.5) * 0.002;
+      particle.vz += (Math.random() - 0.5) * 0.002;
+      
+      const x = positions[i3];
+      const y = positions[i3 + 1];
+      const z = positions[i3 + 2];
+      
+      const dx = hoverPoint.current.x - x;
+      const dy = hoverPoint.current.y - y;
+      const dz = hoverPoint.current.z - z;
+      
+      const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      const force = Math.max(0, 1 - distance / 4.0);
+      
+      if (distance < 4.0) {
+        const angle = Math.atan2(dy, dx) + (Math.PI / 2);
+        const strength = 0.05 * force;
+        
+        particle.vx += Math.cos(angle) * strength;
+        particle.vy += Math.sin(angle) * strength;
+        
+        sizes[i] = size * (1 + force * 3);
+      } else {
+        if (Math.abs(x) > 5) particle.vx -= x * 0.003;
+        if (Math.abs(y) > 5) particle.vy -= y * 0.003;
+        if (Math.abs(z) > 5) particle.vz -= z * 0.003;
+        
+        sizes[i] = size;
+      }
+      
+      positions[i3] += particle.vx;
+      positions[i3 + 1] += particle.vy;
+      positions[i3 + 2] += particle.vz;
+      
+      particle.vx *= 0.95;
+      particle.vy *= 0.95;
+      particle.vz *= 0.95;
+    }
+    
+    const connections: number[] = [];
+    const posArray = pointsRef.current.geometry.attributes.position.array as Float32Array;
+    
+    for (let i = 0; i < particles.length; i++) {
+      const i3 = i * 3;
+      const p1x = posArray[i3];
+      const p1y = posArray[i3 + 1];
+      const p1z = posArray[i3 + 2];
+      
+      let connectionsCount = 0;
+      
+      for (let j = i + 1; j < particles.length && connectionsCount < maxConnections; j++) {
+        const j3 = j * 3;
+        const p2x = posArray[j3];
+        const p2y = posArray[j3 + 1];
+        const p2z = posArray[j3 + 2];
+        
+        const dx = p1x - p2x;
+        const dy = p1y - p2y;
+        const dz = p1z - p2z;
+        
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        
+        if (dist < connectionDistance) {
+          connections.push(p1x, p1y, p1z, p2x, p2y, p2z);
+          connectionsCount++;
+        }
+      }
+    }
+    
+    linesRef.current.geometry.setAttribute(
+      'position', 
+      new THREE.Float32BufferAttribute(connections, 3)
+    );
+    
+    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+    pointsRef.current.geometry.attributes.size.needsUpdate = true;
+    
+    pointsRef.current.rotation.y += 0.001;
+    linesRef.current.rotation.y += 0.001;
+  });
+
   return (
-    <points ref={mesh}>
-      <bufferGeometry {...particlesGeometry} />
-      <PointMaterial
-        size={size}
-        sizeAttenuation={true}
-        color={color}
-        transparent
-        opacity={0.8}
-      />
-    </points>
+    <>
+      <points ref={pointsRef}>
+        <bufferGeometry {...particlesGeometry} />
+        <pointsMaterial
+          size={size}
+          sizeAttenuation={true}
+          color={color}
+          transparent
+          opacity={0.8}
+          alphaTest={0.01}
+        />
+      </points>
+      <lineSegments ref={linesRef}>
+        <bufferGeometry />
+        <primitive object={lineMaterial} />
+      </lineSegments>
+    </>
   );
 };
 
