@@ -50,7 +50,7 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
           color: '#4C9EEB',
           size: 0.05,
           speed: 0.15,
-          lineOpacity: 0.3,
+          lineOpacity: 0.35,
           maxConnections: 4,
           connectionDistance: 3
         };
@@ -60,7 +60,7 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
           color: '#10B981',
           size: 0.04,
           speed: 0.12,
-          lineOpacity: 0.25,
+          lineOpacity: 0.3,
           maxConnections: 3,
           connectionDistance: 2.5
         };
@@ -68,10 +68,10 @@ const Scene = ({ isInteractive = false, variant = 'landing' }: SceneProps) => {
       default:
         return {
           particleCount: 120,
-          color: '#8B5CF6',
+          color: '#9b87f5',
           size: 0.04,
           speed: 0.1,
-          lineOpacity: 0.2,
+          lineOpacity: 0.25,
           maxConnections: 5,
           connectionDistance: 2.8
         };
