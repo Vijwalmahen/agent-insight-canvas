@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import ThreeBackground from "@/components/ThreeBackground";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { submitContactForm } from "@/utils/fileProcessing";
 
 const Contact = () => {
   const { toast } = useToast();
@@ -27,21 +29,38 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Message sent successfully",
-      description: "We'll get back to you soon!",
-    });
-    
-    setIsSubmitting(false);
-    setFormData({
-      name: "",
-      email: "",
-      company: "",
-      message: "",
-    });
+    try {
+      // Use the submitContactForm function from fileProcessing.ts
+      const success = await submitContactForm(formData);
+      
+      if (success) {
+        toast({
+          title: "Message sent successfully",
+          description: "We'll get back to you soon!",
+        });
+        
+        setFormData({
+          name: "",
+          email: "",
+          company: "",
+          message: "",
+        });
+      } else {
+        toast({
+          title: "Error sending message",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error sending message",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // For demonstration, make all fields editable for admin
@@ -56,6 +75,31 @@ const Contact = () => {
     const { name, value } = e.target;
     setContactInfo((prev) => ({ ...prev, [name]: value }));
   };
+
+  // Team members data for the About Us section
+  const teamMembers = [
+    {
+      name: "Dr. Sarah Chen",
+      role: "Chief AI Researcher",
+      description: "With a Ph.D. in Computer Science from Stanford, Sarah leads our multi-agent system research. She has published over 30 papers on collaborative AI systems and previously worked at DeepMind.",
+      image: "/placeholder.svg",
+      initials: "SC",
+    },
+    {
+      name: "Michael Rodriguez",
+      role: "Lead Data Engineer",
+      description: "Michael brings 15 years of experience in distributed systems and big data architecture. He architected data platforms at Netflix and Amazon before joining our mission to democratize AI analytics.",
+      image: "/placeholder.svg", 
+      initials: "MR",
+    },
+    {
+      name: "Aisha Patel",
+      role: "Product Director",
+      description: "Aisha translates complex AI capabilities into intuitive user experiences. Her background in cognitive science and product management at Google helps ensure our technology remains accessible to all users.",
+      image: "/placeholder.svg",
+      initials: "AP",
+    },
+  ];
 
   return (
     <>
@@ -288,9 +332,31 @@ const Contact = () => {
                     </p>
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">View All FAQs</Button>
-                </CardFooter>
+              </Card>
+              
+              {/* About Us Section */}
+              <Card className="bg-card/80 backdrop-blur-md border border-border/50">
+                <CardHeader>
+                  <CardTitle>About Us</CardTitle>
+                  <CardDescription>
+                    Meet the team behind our multi-agent AI platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {teamMembers.map((member, index) => (
+                      <div key={index} className="flex flex-col items-center text-center">
+                        <Avatar className="h-24 w-24 mb-3">
+                          <AvatarImage src={member.image} alt={member.name} />
+                          <AvatarFallback className="text-lg">{member.initials}</AvatarFallback>
+                        </Avatar>
+                        <h3 className="font-medium text-lg">{member.name}</h3>
+                        <p className="text-primary text-sm mb-2">{member.role}</p>
+                        <p className="text-muted-foreground text-sm">{member.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
               </Card>
             </div>
           </div>
