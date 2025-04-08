@@ -37,7 +37,8 @@ const ParticleField = ({ count = 1000, mouse, speed = 0.1, size = 0.02, color = 
     const sizes = mesh.current.geometry.attributes.size.array as Float32Array;
     
     // Convert mouse position to 3D space
-    hoverPoint.current.set((mouse.current.x * 3), (mouse.current.y * 3), 0);
+    // Enhanced reactivity - increase the effect of mouse position
+    hoverPoint.current.set((mouse.current.x * 5), (mouse.current.y * 5), 0);
     
     for (let i = 0; i < particles.length; i++) {
       const i3 = i * 3;
@@ -54,34 +55,38 @@ const ParticleField = ({ count = 1000, mouse, speed = 0.1, size = 0.02, color = 
       const dz = hoverPoint.current.z - z;
       
       const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-      const force = Math.max(0, 1 - distance / 1.5);
       
-      // Apply force toward or away from mouse
-      if (distance < 1.5) {
-        particle.vx += dx * force * 0.01;
-        particle.vy += dy * force * 0.01;
-        particle.vz += dz * force * 0.01;
+      // Enhanced force calculation - wider reach and stronger effect
+      const force = Math.max(0, 1 - distance / 3.0);
+      
+      // Apply force toward or away from mouse - increased effect
+      if (distance < 3.0) {
+        // Push particles away from mouse for a more reactive effect
+        particle.vx -= dx * force * 0.03;
+        particle.vy -= dy * force * 0.03;
+        particle.vz -= dz * force * 0.03;
         
-        // Make particles near mouse larger
-        sizes[i] = size * (1 + force);
+        // Make particles near mouse larger for more visible effect
+        sizes[i] = size * (1 + force * 2);
       } else {
-        // Return to original position
-        particle.vx += (particle.x - x) * speed * 0.01;
-        particle.vy += (particle.y - y) * speed * 0.01;
-        particle.vz += (particle.z - z) * speed * 0.01;
+        // Return to original position more quickly
+        particle.vx += (particle.x - x) * speed * 0.02;
+        particle.vy += (particle.y - y) * speed * 0.02;
+        particle.vz += (particle.z - z) * speed * 0.02;
         
         // Reset size
         sizes[i] = size;
       }
       
-      // Apply velocity with damping
+      // Apply velocity with less damping for more fluid motion
       positions[i3] += particle.vx;
       positions[i3 + 1] += particle.vy;
       positions[i3 + 2] += particle.vz;
       
-      particle.vx *= 0.9;
-      particle.vy *= 0.9;
-      particle.vz *= 0.9;
+      // Slightly reduced damping for more persistent motion
+      particle.vx *= 0.92;
+      particle.vy *= 0.92;
+      particle.vz *= 0.92;
     }
     
     mesh.current.geometry.attributes.position.needsUpdate = true;
