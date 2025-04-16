@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFile, processFile, generatePDF } from "@/utils/fileProcessing";
+import { uploadAndProcessFile, generatePDF } from "@/utils/fileProcessing";
 import ThreeBackground from "@/components/ThreeBackground";
 import { Loader2, Download } from "lucide-react";
 import MarkdownViewer from "@/components/MarkdownViewer";
@@ -14,7 +14,6 @@ import ProcessingAnimation from "@/components/ProcessingAnimation";
 const Demo = () => {
   const [file, setFile] = useState<File | null>(null);
   const [fileId, setFileId] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("upload");
@@ -36,54 +35,23 @@ const Demo = () => {
     }
   };
 
-  const handleUpload = async () => {
+  const handleProcess = async () => {
     if (!file) {
       toast({
         variant: "destructive",
         title: "No file selected",
-        description: "Please select a file to upload",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const id = await uploadFile(file);
-      setFileId(id);
-      
-      toast({
-        title: "File uploaded successfully",
-        description: "Your file is ready for analysis",
-      });
-      
-      // Auto navigate to the process tab
-      setActiveTab("process");
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      toast({
-        variant: "destructive",
-        title: "Upload failed",
-        description: "There was an error uploading your file",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleProcess = async () => {
-    if (!fileId) {
-      toast({
-        variant: "destructive",
-        title: "No file uploaded",
-        description: "Please upload a file first",
+        description: "Please select a file first",
       });
       return;
     }
 
     setIsProcessing(true);
     try {
-      const markdownResult = await processFile(fileId);
-      setAnalysisResult(markdownResult);
+      // Use the new combined upload and process function
+      const { fileId, markdown } = await uploadAndProcessFile(file);
+      
+      setFileId(fileId);
+      setAnalysisResult(markdown);
       
       toast({
         title: "Analysis complete",
@@ -166,10 +134,9 @@ const Demo = () => {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="upload">1. Upload File</TabsTrigger>
-                  <TabsTrigger value="process" disabled={!fileId}>2. Process Data</TabsTrigger>
-                  <TabsTrigger value="result" disabled={!analysisResult}>3. View Results</TabsTrigger>
+                  <TabsTrigger value="result" disabled={!analysisResult}>2. View Results</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="upload" className="py-4">
@@ -249,52 +216,24 @@ const Demo = () => {
                           </Button>
                           <Button 
                             size="sm" 
-                            onClick={handleUpload} 
-                            disabled={isUploading}
+                            onClick={handleProcess} 
+                            disabled={isProcessing || !file}
                             className="transition-all duration-300"
                           >
-                            {isUploading ? (
+                            {isProcessing ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Uploading...
+                                Analyzing...
                               </>
                             ) : (
-                              'Upload'
+                              'Start Analysis'
                             )}
                           </Button>
                         </div>
                       </div>
                     )}
                     
-                    {fileId && (
-                      <div className="bg-green-900/20 border border-green-500/20 text-green-500 p-3 rounded-lg transition-all duration-300 animate-fade-in">
-                        <p className="font-medium">File successfully uploaded</p>
-                        <p className="text-sm">Ready for processing</p>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="process" className="py-4">
-                  <div className="space-y-6 text-center">
-                    {!isProcessing ? (
-                      <div className="bg-secondary/30 p-6 rounded-lg transition-all duration-300">
-                        <h3 className="text-xl font-medium mb-3">Ready to analyze your data</h3>
-                        <p className="text-muted-foreground mb-6">
-                          Our AI agents will now analyze your dataset, generate custom code,
-                          and extract meaningful insights.
-                        </p>
-                        
-                        <Button 
-                          onClick={handleProcess} 
-                          disabled={isProcessing} 
-                          size="lg"
-                          className="w-full sm:w-auto transition-all duration-300"
-                        >
-                          Start Analysis
-                        </Button>
-                      </div>
-                    ) : (
+                    {isProcessing && (
                       <div className="bg-secondary/30 p-6 rounded-lg transition-all duration-300 animate-fade-in">
                         <ProcessingAnimation message="Analyzing your dataset..." />
                       </div>
