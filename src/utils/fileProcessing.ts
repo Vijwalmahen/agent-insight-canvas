@@ -63,12 +63,15 @@ This is a simulated analysis of the uploaded file. In a real implementation, thi
 // Generate PDF from markdown content
 export const generatePDF = async (markdownContent: string, filename = "analysis-report.pdf"): Promise<void> => {
   try {
+    // First attempt to use the real API if available
     const response = await fetch(`${config.apiBaseUrl}/generate-pdf`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ markdown_content: markdownContent }),
+      // Set a timeout to prevent long waits if API is down
+      signal: AbortSignal.timeout(5000),
     });
     
     if (!response.ok) {
@@ -89,16 +92,30 @@ export const generatePDF = async (markdownContent: string, filename = "analysis-
   } catch (error) {
     console.error("Error generating PDF:", error);
     
-    // For demonstration purposes, simulate a PDF download if the API is not available
-    const mockPdfBlob = new Blob([markdownContent], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(mockPdfBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
+    // For demonstration purposes, create a better mock PDF if the API is not available
+    // Use jsPDF library to create a simple PDF with the markdown content
+    // This is just a fallback for demo purposes
+    import('jspdf').then(({ default: jsPDF }) => {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text("Analysis Report", 20, 20);
+      
+      // Add content (simplified from markdown)
+      doc.setFontSize(12);
+      const textContent = markdownContent.replace(/#+\s+/g, "").replace(/```[^`]+```/g, "[DATA TABLE]");
+      
+      // Basic word wrapping by splitting content into lines
+      const lines = doc.splitTextToSize(textContent, 170);
+      doc.text(lines, 20, 30);
+      
+      // Save and download the PDF
+      doc.save(filename);
+    }).catch(err => {
+      console.error("Error generating mock PDF:", err);
+      alert("PDF generation failed. Please try again later.");
+    });
   }
 };
 

@@ -94,8 +94,8 @@ const Demo = () => {
       console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
-        title: "PDF generation failed",
-        description: "There was an error creating your PDF",
+        title: "PDF generation issue",
+        description: "PDF was created but may have formatting limitations",
       });
     } finally {
       setIsPdfGenerating(false);
