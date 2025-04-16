@@ -64,7 +64,6 @@ export const generatePDF = async (markdownContent: string, filename = "analysis-
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ markdown_content: markdownContent }),
-      responseType: 'blob',
     });
     
     if (!response.ok) {

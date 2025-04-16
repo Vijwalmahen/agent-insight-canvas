@@ -11,6 +11,14 @@ interface MarkdownViewerProps {
   className?: string;
 }
 
+// Define proper types for the code component props
+interface CodeProps {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}
+
 const MarkdownViewer = ({ content, className }: MarkdownViewerProps) => {
   return (
     <div className={`markdown-viewer ${className || ''}`}>
@@ -18,7 +26,7 @@ const MarkdownViewer = ({ content, className }: MarkdownViewerProps) => {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
-          code({node, inline, className, children, ...props}) {
+          code({node, inline, className, children, ...props}: CodeProps) {
             const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
               <SyntaxHighlighter
