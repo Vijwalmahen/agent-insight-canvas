@@ -86,3 +86,35 @@ export const generatePDF = async (markdownContent: string, filename = "analysis-
     throw error;
   }
 };
+
+// Define the interface for contact form data
+interface ContactFormData {
+  name: string;
+  email: string;
+  company?: string;
+  message: string;
+}
+
+// Submit contact form to FastAPI backend
+export const submitContactForm = async (formData: ContactFormData): Promise<boolean> => {
+  console.log("Submitting contact form data:", formData);
+  
+  try {
+    const response = await fetch(`${config.apiBaseUrl}/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Submission failed with status: ${response.status}`);
+    }
+    
+    return true; // Return success
+  } catch (error) {
+    console.error("Error submitting contact form:", error);
+    return false; // Return failure
+  }
+};
