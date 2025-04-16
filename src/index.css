@@ -119,3 +119,112 @@
 .hover-lift {
   @apply transition-transform duration-300 ease-out hover:-translate-y-1;
 }
+
+/* Markdown Styling */
+.markdown-viewer {
+  @apply text-foreground leading-relaxed;
+}
+
+.markdown-viewer h1,
+.markdown-viewer h2,
+.markdown-viewer h3,
+.markdown-viewer h4,
+.markdown-viewer h5,
+.markdown-viewer h6 {
+  @apply font-medium text-foreground mt-6 mb-2;
+}
+
+.markdown-viewer h1 {
+  @apply text-2xl border-b border-border pb-1;
+}
+
+.markdown-viewer h2 {
+  @apply text-xl border-b border-border/50 pb-1;
+}
+
+.markdown-viewer h3 {
+  @apply text-lg;
+}
+
+.markdown-viewer p {
+  @apply my-3;
+}
+
+.markdown-viewer ul {
+  @apply list-disc pl-5 my-3;
+}
+
+.markdown-viewer ol {
+  @apply list-decimal pl-5 my-3;
+}
+
+.markdown-viewer li {
+  @apply my-1;
+}
+
+.markdown-viewer pre {
+  @apply rounded-md p-3 my-3 bg-secondary/50 overflow-x-auto;
+}
+
+.markdown-viewer code {
+  @apply font-mono text-sm;
+}
+
+.markdown-viewer blockquote {
+  @apply border-l-4 border-border pl-4 italic my-4;
+}
+
+.markdown-viewer a {
+  @apply text-primary hover:underline;
+}
+
+.markdown-viewer table {
+  @apply min-w-full divide-y divide-border my-4;
+}
+
+.markdown-viewer th {
+  @apply px-3 py-2 text-left text-xs font-medium uppercase tracking-wider bg-secondary/30;
+}
+
+.markdown-viewer td {
+  @apply px-3 py-2 border-t border-border/40;
+}
+
+/* Processing Animation */
+.processing-wave {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.processing-wave::before,
+.processing-wave::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid hsl(var(--primary));
+  animation: pulse 2s ease-out infinite;
+}
+
+.processing-wave::before {
+  width: 100%;
+  height: 100%;
+}
+
+.processing-wave::after {
+  width: 70%;
+  height: 70%;
+  animation-delay: 0.3s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+

@@ -4,17 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import { uploadFile, processFile } from "@/utils/fileProcessing";
+import { useToast } from "@/hooks/use-toast";
+import { uploadFile, processFile, generatePDF } from "@/utils/fileProcessing";
 import ThreeBackground from "@/components/ThreeBackground";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import MarkdownViewer from "@/components/MarkdownViewer";
+import ProcessingAnimation from "@/components/ProcessingAnimation";
 
 const Demo = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fileId, setFileId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("upload");
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -22,7 +26,7 @@ const Demo = () => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      setFileUrl(null);
+      setFileId(null);
       setAnalysisResult(null);
       
       toast({
@@ -44,13 +48,16 @@ const Demo = () => {
 
     setIsUploading(true);
     try {
-      const url = await uploadFile(file);
-      setFileUrl(url);
+      const id = await uploadFile(file);
+      setFileId(id);
       
       toast({
         title: "File uploaded successfully",
         description: "Your file is ready for analysis",
       });
+      
+      // Auto navigate to the process tab
+      setActiveTab("process");
     } catch (error) {
       console.error("Error uploading file:", error);
       toast({
@@ -64,7 +71,7 @@ const Demo = () => {
   };
 
   const handleProcess = async () => {
-    if (!fileUrl) {
+    if (!fileId) {
       toast({
         variant: "destructive",
         title: "No file uploaded",
@@ -75,13 +82,16 @@ const Demo = () => {
 
     setIsProcessing(true);
     try {
-      const result = await processFile(fileUrl);
-      setAnalysisResult(result);
+      const markdownResult = await processFile(fileId);
+      setAnalysisResult(markdownResult);
       
       toast({
         title: "Analysis complete",
         description: "Your dataset has been successfully analyzed",
       });
+      
+      // Auto navigate to the result tab
+      setActiveTab("result");
     } catch (error) {
       console.error("Error processing file:", error);
       toast({
@@ -94,10 +104,41 @@ const Demo = () => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!analysisResult) {
+      toast({
+        variant: "destructive",
+        title: "No results to download",
+        description: "Please analyze your data first",
+      });
+      return;
+    }
+
+    setIsPdfGenerating(true);
+    try {
+      await generatePDF(analysisResult, `${file?.name.split('.')[0] || 'analysis'}-report.pdf`);
+      
+      toast({
+        title: "PDF generated",
+        description: "Your report has been downloaded",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "PDF generation failed",
+        description: "There was an error creating your PDF",
+      });
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
+
   const resetDemo = () => {
     setFile(null);
-    setFileUrl(null);
+    setFileId(null);
     setAnalysisResult(null);
+    setActiveTab("upload");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -124,16 +165,16 @@ const Demo = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="upload" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="upload">1. Upload File</TabsTrigger>
-                  <TabsTrigger value="process" disabled={!fileUrl}>2. Process Data</TabsTrigger>
+                  <TabsTrigger value="process" disabled={!fileId}>2. Process Data</TabsTrigger>
                   <TabsTrigger value="result" disabled={!analysisResult}>3. View Results</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="upload" className="py-4">
                   <div className="space-y-4">
-                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center transition-all duration-300">
                       <Input
                         ref={fileInputRef}
                         type="file"
@@ -146,7 +187,7 @@ const Demo = () => {
                         htmlFor="file-input"
                         className="flex flex-col items-center justify-center cursor-pointer"
                       >
-                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-3">
+                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-3 transition-transform duration-300 hover:scale-110">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-8 w-8 text-primary"
@@ -162,7 +203,7 @@ const Demo = () => {
                             />
                           </svg>
                         </div>
-                        <p className="text-lg font-medium mb-1">
+                        <p className="text-lg font-medium mb-1 transition-all duration-300 hover:text-primary">
                           Drag and drop your file here, or click to browse
                         </p>
                         <p className="text-sm text-muted-foreground">
@@ -172,7 +213,7 @@ const Demo = () => {
                     </div>
                     
                     {file && (
-                      <div className="flex flex-col sm:flex-row items-center justify-between bg-secondary/50 p-3 rounded-lg">
+                      <div className="flex flex-col sm:flex-row items-center justify-between bg-secondary/50 p-3 rounded-lg transition-all duration-300 animate-fade-in">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center mr-3">
                             <svg
@@ -198,13 +239,19 @@ const Demo = () => {
                           </div>
                         </div>
                         <div className="flex gap-2 mt-2 sm:mt-0">
-                          <Button variant="outline" size="sm" onClick={() => setFile(null)}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setFile(null)}
+                            className="transition-all duration-300 hover:bg-destructive/10 hover:text-destructive"
+                          >
                             Remove
                           </Button>
                           <Button 
                             size="sm" 
                             onClick={handleUpload} 
                             disabled={isUploading}
+                            className="transition-all duration-300"
                           >
                             {isUploading ? (
                               <>
@@ -219,8 +266,8 @@ const Demo = () => {
                       </div>
                     )}
                     
-                    {fileUrl && (
-                      <div className="bg-green-900/20 border border-green-500/20 text-green-500 p-3 rounded-lg">
+                    {fileId && (
+                      <div className="bg-green-900/20 border border-green-500/20 text-green-500 p-3 rounded-lg transition-all duration-300 animate-fade-in">
                         <p className="font-medium">File successfully uploaded</p>
                         <p className="text-sm">Ready for processing</p>
                       </div>
@@ -230,39 +277,26 @@ const Demo = () => {
                 
                 <TabsContent value="process" className="py-4">
                   <div className="space-y-6 text-center">
-                    <div className="bg-secondary/30 p-6 rounded-lg">
-                      <h3 className="text-xl font-medium mb-3">Ready to analyze your data</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Our AI agents will now analyze your dataset, generate custom code,
-                        and extract meaningful insights.
-                      </p>
-                      
-                      <Button 
-                        onClick={handleProcess} 
-                        disabled={isProcessing} 
-                        size="lg"
-                        className="w-full sm:w-auto"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          'Start Analysis'
-                        )}
-                      </Button>
-                    </div>
-                    
-                    {isProcessing && (
-                      <div className="bg-secondary/30 p-6 rounded-lg">
-                        <h4 className="font-medium mb-2">Analysis in progress</h4>
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">Our AI agents are working on your dataset...</p>
-                          <div className="w-full bg-secondary rounded-full h-2.5">
-                            <div className="bg-primary h-2.5 rounded-full animate-pulse-slow" style={{width: '60%'}}></div>
-                          </div>
-                        </div>
+                    {!isProcessing ? (
+                      <div className="bg-secondary/30 p-6 rounded-lg transition-all duration-300">
+                        <h3 className="text-xl font-medium mb-3">Ready to analyze your data</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Our AI agents will now analyze your dataset, generate custom code,
+                          and extract meaningful insights.
+                        </p>
+                        
+                        <Button 
+                          onClick={handleProcess} 
+                          disabled={isProcessing} 
+                          size="lg"
+                          className="w-full sm:w-auto transition-all duration-300"
+                        >
+                          Start Analysis
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="bg-secondary/30 p-6 rounded-lg transition-all duration-300 animate-fade-in">
+                        <ProcessingAnimation message="Analyzing your dataset..." />
                       </div>
                     )}
                   </div>
@@ -273,11 +307,14 @@ const Demo = () => {
                     <div className="bg-secondary/30 p-6 rounded-lg">
                       <h3 className="text-xl font-medium mb-4">Analysis Results</h3>
                       
-                      {analysisResult && (
-                        <div 
-                          className="prose prose-invert max-w-none"
-                          dangerouslySetInnerHTML={{ __html: analysisResult }}
-                        />
+                      {analysisResult ? (
+                        <div className="prose prose-invert max-w-none animate-fade-in">
+                          <MarkdownViewer content={analysisResult} />
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">
+                          No results yet. Please complete the analysis first.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -285,9 +322,31 @@ const Demo = () => {
               </Tabs>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={resetDemo}>Reset Demo</Button>
+              <Button 
+                variant="outline" 
+                onClick={resetDemo}
+                className="transition-all duration-300"
+              >
+                Reset Demo
+              </Button>
               {analysisResult && (
-                <Button>Download Report</Button>
+                <Button
+                  onClick={handleDownloadPdf}
+                  disabled={isPdfGenerating}
+                  className="transition-all duration-300"
+                >
+                  {isPdfGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Report
+                    </>
+                  )}
+                </Button>
               )}
             </CardFooter>
           </Card>
@@ -297,7 +356,7 @@ const Demo = () => {
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
               Contact us for a personalized demonstration with your actual datasets.
             </p>
-            <Button asChild>
+            <Button asChild className="transition-all duration-300">
               <a href="/contact">Contact Us</a>
             </Button>
           </div>
