@@ -60,62 +60,38 @@ This is a simulated analysis of the uploaded file. In a real implementation, thi
   return { fileId: mockFileId, markdown: mockMarkdown };
 };
 
-// Generate PDF from markdown content
+// Generate PDF directly from markdown content using jsPDF
 export const generatePDF = async (markdownContent: string, filename = "analysis-report.pdf"): Promise<void> => {
   try {
-    // First attempt to use the real API if available
-    const response = await fetch(`${config.apiBaseUrl}/generate-pdf`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ markdown_content: markdownContent }),
-      // Set a timeout to prevent long waits if API is down
-      signal: AbortSignal.timeout(5000),
-    });
+    console.log("Generating PDF from markdown content using jsPDF");
     
-    if (!response.ok) {
-      throw new Error(`PDF generation failed with status: ${response.status}`);
-    }
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
     
-    const blob = await response.blob();
+    // Add title
+    doc.setFontSize(16);
+    doc.text("Analysis Report", 20, 20);
     
-    // Create download link and trigger download
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
+    // Process the markdown content
+    // Remove headings prefixes (# ## ###) and code blocks
+    const processedContent = markdownContent
+      .replace(/^#+\s+/gm, "")  // Remove heading markers while preserving content
+      .replace(/```[\s\S]+?```/g, "[DATA TABLE]");  // Replace code blocks
+    
+    // Basic word wrapping by splitting content into lines
+    doc.setFontSize(12);
+    const lines = doc.splitTextToSize(processedContent, 170);
+    
+    // Add content with proper positioning
+    doc.text(lines, 20, 30);
+    
+    // Save and download the PDF
+    doc.save(filename);
+    
+    console.log("PDF generation completed");
   } catch (error) {
     console.error("Error generating PDF:", error);
-    
-    // For demonstration purposes, create a better mock PDF if the API is not available
-    // Use jsPDF library to create a simple PDF with the markdown content
-    // This is just a fallback for demo purposes
-    import('jspdf').then(({ default: jsPDF }) => {
-      const doc = new jsPDF();
-      
-      // Add title
-      doc.setFontSize(16);
-      doc.text("Analysis Report", 20, 20);
-      
-      // Add content (simplified from markdown)
-      doc.setFontSize(12);
-      const textContent = markdownContent.replace(/#+\s+/g, "").replace(/```[^`]+```/g, "[DATA TABLE]");
-      
-      // Basic word wrapping by splitting content into lines
-      const lines = doc.splitTextToSize(textContent, 170);
-      doc.text(lines, 20, 30);
-      
-      // Save and download the PDF
-      doc.save(filename);
-    }).catch(err => {
-      console.error("Error generating mock PDF:", err);
-      alert("PDF generation failed. Please try again later.");
-    });
+    throw new Error("PDF generation failed. Please try again later.");
   }
 };
 
